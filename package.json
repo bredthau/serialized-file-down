@@ -1,0 +1,34 @@
+{
+  "name": "serialized-file-down",
+  "version": "1.0.0",
+  "description": "Leveldown complient storage serializing to a file using custom serialization functions",
+  "main": "index.js",
+  "files": [
+    "/index.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "tap"
+  },
+  "keywords": [
+    "level",
+    "leveldown",
+    "json"
+  ],
+  "homepage": "https://github.com/bredthau/serialized-file-down",
+  "bugs": "https://github.com/bredthau/serialized-file-down/issues",
+  "author": "bredthau",
+  "license": "MIT",
+  "dependencies": {
+    "abstract-leveldown": "^6.2.2",
+    "encoding-down": "^6.3.0",
+    "memdown": "^5.1.0"
+  },
+  "devDependencies": {
+    "nyc": "^15.0.0",
+    "tap": "^14.10.5",
+    "tape-async": "^2.3.0",
+    "tempy": "^0.3.0"
+  }
+}
