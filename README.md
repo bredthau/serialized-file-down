@@ -63,6 +63,16 @@ const serializer = {
 };
 const db       = levelup(filedown('./db.json.gz'), { serializer });
 ```
+## Note
+In order to get full use out of this library, any higher level `encoding-down` instances (e.g. provided by [subleveldown](https://github.com/Level/subleveldown) should be set to bypass encoding for values using `valueEncoding = 'id'`
+
+```js
+const levelup  = require('levelup');
+const sub      = require('subleveldown');
+const filedown = require('serialized-file-down');
+const db       = levelup(filedown('./db.json'));
+const data	   = sub(db, 'data', { valueEncoding: 'id' });
+```
 
 ## API
 `db = require('filedown')(path[, options])`

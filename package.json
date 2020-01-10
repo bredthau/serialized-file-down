@@ -1,6 +1,6 @@
 {
   "name": "serialized-file-down",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Leveldown complient storage serializing to a file using custom serialization functions",
   "main": "index.js",
   "files": [
@@ -17,6 +17,7 @@
     "json"
   ],
   "homepage": "https://github.com/bredthau/serialized-file-down",
+  "repository": "https://github.com/bredthau/serialized-file-down",
   "bugs": "https://github.com/bredthau/serialized-file-down/issues",
   "author": "bredthau",
   "license": "MIT",
