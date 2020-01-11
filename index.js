@@ -8,6 +8,7 @@ const Storing    = Symbol("Storing");
 const Store      = Symbol("Store");
 const Underlying = Symbol("Underlying");
 const StoreQueued= Symbol("StoreQueued");
+const QueueHandle= Symbol("QueueHandle");
 const Options    = Symbol("Options");
 function dataToBatch(arr) {
     return arr.map(({key, value}) => ({type: 'put', key, value}));
@@ -31,7 +32,10 @@ async function serialize(store) {
 }
 
 function delayed(ms) {
-    return new Promise(res => setTimeout(res, ms));
+	let handle    = null;
+    const result  = new Promise(res => handle = setTimeout(res, ms));
+	result.handle = handle;
+	return result;
 }
 
 
@@ -73,6 +77,7 @@ class FileLevelDown extends AbstractLevelDOWN {
         this[Underlying] = underlyingDb;
         this[Storing]    = Promise.resolve();
         this[StoreQueued]= false;
+		this[QueueHandle]= null;
         this[Options]    = { location, delay, serializer, db: underlyingDb, backup: makeFileNameFunc(backup, location, ".back"), next: makeFileNameFunc(next, location, ".next") };
     }
 
@@ -110,17 +115,38 @@ class FileLevelDown extends AbstractLevelDOWN {
         }).then((e) => { cb(e); });
     }
 
-    async [Store](cb, promise) {
+	async writeBack(cb) {
+		let   resolve;
+		const promise = new Promise(res => resolve = res);		
+		
+		await this[Store](resolve, Promise.resolve(), false);
+		const err = await promise;
+		if(cb)
+			cb(err);
+		else if(err)
+			throw(new Error(err));
+	}
+
+    async [Store](cb, promise, callDelayed = true) {
         let err = await promise;
-        if(err || this[StoreQueued])
+        if(err || (callDelayed ? this[StoreQueued] : !this[StoreQueued]))
             return cb(err);
         this[StoreQueued] = true;
-        const storing = this[Storing];
-        this[Storing] = new Promise(async (res, rej) => {
+        const storing 	  = this[Storing];
+        this[Storing] 	  = new Promise(async (res, rej) => {
             const options = this[Options];
             try {
-                await storing;
-                await delayed(options.delay);
+				if(callDelayed) {
+					await storing;
+					const del = delayed(options.delay);
+					this[QueueHandle] = del.handle;
+					await del;
+				} else if(this[QueueHandle])
+					clearTimeout(this[QueueHandle]);
+				this[QueueHandle] = null;
+				
+				if(!this[StoreQueued])
+					res();
                 this[StoreQueued] = false;
                 const [err, data] = await serialize(this[Underlying]);
                 if(err)
@@ -147,7 +173,7 @@ class FileLevelDown extends AbstractLevelDOWN {
     }
 
     async _close(cb) {
-        await this[Storing];
+        await this.writeBack()
         this[Underlying].close(cb);
     }
     async _clear(opts, cb) {
